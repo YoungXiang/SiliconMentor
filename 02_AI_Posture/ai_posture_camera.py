@@ -6,8 +6,36 @@ from zhipuai import ZhipuAI
 from typing import Union
 import json
 import re
+import pyttsx3
+import threading
 
+class VoiceReminder:
+    def __init__(self):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('rate', 150)  # 设置语速
+        self.engine.setProperty('volume', 1)  # 设置音量（0.0到1.0）
+        self.thread = threading.Thread(target=self._run)
+        self.thread.start()
+        self.queue = []
 
+    def _run(self):
+        while True:
+            if self.queue and len(self.queue) > 0:
+                text = self.queue.pop(0)
+                self.engine.say(text)
+                self.engine.runAndWait()
+                continue
+
+            # 避免CPU占用过高
+            time.sleep(0.1)  
+
+    def stop(self):
+        self.engine.stop()
+        self.thread.join()
+
+    # async call
+    def say(self, text):
+        self.queue.append(text)
 
 class VideoPostureAnalyzer:
     def __init__(self, api_key: str, camera_url:str,  interval_sec: int = 2, output_dir: str = "output"):
